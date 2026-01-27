@@ -1,3 +1,4 @@
+const DonatedOrgan = require("../models/DonatedOrgan");
 const User = require("../models/User");
 
 class userRepository {
@@ -14,7 +15,7 @@ class userRepository {
     async findUser(data){
         try {
             const user = await User.find({email:data.email});
-           return user;
+            return user;
         } catch (error) {
             console.log(error);
             throw new Error('Error while logging in');
@@ -31,6 +32,15 @@ class userRepository {
         }
     }
 
+    async createDonation(data){
+        try {
+            const donation = await DonatedOrgan.create(data);
+            return donation;
+        } catch (error) {
+            console.log(error);
+            throw new Error('Error in donation creation');
+        }
+    }
 }
 
 module.exports = userRepository;

@@ -22,7 +22,7 @@ const hospitalSchema = new mongoose.Schema({
     donate : [
         {
             type : mongoose.Schema.Types.ObjectId,
-            ref : 'DonatededOrgan'
+            ref : 'DonatedOrgan'
         }
     ]
 })

@@ -5,5 +5,6 @@ const userController = require('../../controllers/userController');
 router.post('/signup',userController.signup);
 router.post('/login',userController.login);
 router.post('/request',userController.requestedOrgan);
+router.post('/donation',userController.createDonation);
 
 module.exports = router;

@@ -13,12 +13,14 @@ const requestedOrgan = new mongoose.Schema({
         type : mongoose.Schema.Types.ObjectId,
         ref : "Hospital"
     },
-    doctorName:{
-        type:String
+    doctorName : {
+        type : mongoose.Schema.Types.ObjectId,
+        ref : "User"
     },
     status : {
         type : String,
-        enum : ["pending","fullfilled"]
+        enum : ["pending","fullfilled"],
+        default : "pending"
     }
 })
 

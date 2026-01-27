@@ -2,6 +2,8 @@ const userRepository = require("../repository/userRepo");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../config/serverConfig");
+const Hospital = require("../models/Hospital");
+const User = require("../models/User");
 
 class userService {
     constructor(){
@@ -10,8 +12,26 @@ class userService {
 
     async createUser(data){
         try {
-            const user = await this.userRepository.createUser(data);
+            if(data.role == "DONOR"){
+                const user = await this.userRepository.createUser(data);
+                return user;
+            }
+            
+            const hospitalObj = await Hospital.find({name:data.hospitalName , city:data.city}).select("_id");
+            if(!hospitalId){
+                throw new Error('Wrong credentials')
+            }
+            const user = await this.userRepository.createUser({
+                name : data.name,
+                email : data.email,
+                password : data.password,
+                role : data.role,
+                hospitalId : hospitalObj._id,
+                phoneNumber : data.phoneNumber,
+                address : data.address
+            });
             return user;
+
         } catch (error) {
             console.log(error);
             throw new Error('Error in user service');
@@ -37,6 +57,31 @@ class userService {
         }
         catch(error){
             console.log(error);
+            throw error;
+        }
+    }
+    async createDonation(data){
+        try {
+            const organName = data.organName;
+            const bloodGroup = data.organName;
+            const role = data.role;
+            const userId = data.userId;
+            if(role == "DONOR"){
+                const donateOrgan = await this.userRepository.createDonation({
+                    organName , bloodGroup , donor : "User" , donorId : userId
+                })
+                return donateOrgan;
+            }
+
+            // role == doctor
+            const userObject = await User.findById(userId).select("hospitalId");
+            const donateOrgan = await this.userRepository.createDonation({
+                organName , bloodGroup , donor : "Hospital" , donorId : userObject.hospitalId
+            })
+            return donateOrgan;
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
     }
     async requestOrgan(data){
