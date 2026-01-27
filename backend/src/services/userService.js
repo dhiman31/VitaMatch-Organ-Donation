@@ -32,11 +32,30 @@ class userService {
                 }
             });
 
-            const token = jwt.sign({id:user.id,email:user.email},JWT_SECRET,{expiresIn:60*60});
+            const token = jwt.sign({id:user.id,email:user.email,role:user.role},JWT_SECRET,{expiresIn:60*60});
             return token;
         }
         catch(error){
             console.log(error);
+        }
+    }
+    async requestOrgan(data){
+        try{
+            if(data.role!='DOCTOR'){
+                throw new Error("Only Doctor can request organ");
+            }
+            const doctor = await User.findById(data.userId);
+            const requestedOrgan = this.userRepository.createRequest({
+                organName:data.organName,
+                bloodGroup:data.bloodGroup,
+                hospitalId:doctor.hospitalId,
+                doctorName:doctor.name
+            });
+            return requestedOrgan;
+            
+        }catch(error){  
+            console.log("error in organ request");
+            throw new Error("error in organ request")
         }
     }
 }
