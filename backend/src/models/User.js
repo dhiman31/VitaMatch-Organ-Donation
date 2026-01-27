@@ -18,7 +18,8 @@ const userSchema= new mongoose.Schema({
     },
     hospitalId: {
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "Hospital" 
+        ref: "Hospital",
+        default: null
     },
     phoneNumber: {
         type : Number
@@ -33,4 +34,19 @@ const userSchema= new mongoose.Schema({
     // }
 })
 
-module.exports= new mongoose.models("User",userSchema);
+userSchema.pre("save", async function (next) {
+    
+  if (!this.isModified("password")) return next();
+
+  try {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(this.password, saltRounds);
+    this.password = hashedPassword;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+module.exports= new mongoose.model("User",userSchema);

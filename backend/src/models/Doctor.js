@@ -10,3 +10,6 @@ const doctorSchema = new mongoose.Schema({
         ref: "User" 
     }
 })
+
+const Doctor = mongoose.model('Doctor' , doctorSchema);
+module.exports = Doctor;

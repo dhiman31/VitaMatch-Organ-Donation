@@ -21,4 +21,4 @@ const donatedOrganSchema= new mongoose.Schema({
     }
 })
 
-module.exports = mongoose.models("DonatedOrgan",donatedOrganSchema);
+module.exports = mongoose.model("DonatedOrgan",donatedOrganSchema);
