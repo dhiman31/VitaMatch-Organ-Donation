@@ -14,3 +14,6 @@ const requestedOrgan = new mongoose.Schema({
         enum : ["pending","fullfilled"]
     }
 })
+
+const RequestedOrgan = mongoose.model('RequestedOrgan' , requestedOrgan);
+module.exports = RequestedOrgan;

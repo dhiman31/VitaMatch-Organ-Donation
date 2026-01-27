@@ -11,4 +11,4 @@ const organSchema= new mongoose.Schema({
     },
 })
 
-module.exports = mongoose.models("Organ",organSchema);
+module.exports = mongoose.model("Organ",organSchema);
