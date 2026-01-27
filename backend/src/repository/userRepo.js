@@ -20,6 +20,17 @@ class userRepository {
             throw new Error('Error while logging in');
         }
     }
+
+    async createRequest(data){
+        try{
+            const requestedOrgan = RequestedOrgan.create(data);
+            return requestedOrgan;
+        }catch(error){
+            console.log(error);
+            throw new Error('Error while logging in');
+        }
+    }
+
 }
 
 module.exports = userRepository;
