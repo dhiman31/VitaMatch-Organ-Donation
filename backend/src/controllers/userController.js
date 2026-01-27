@@ -1,4 +1,5 @@
 const { JWT_SECRET } = require("../config/serverConfig");
+const jwt = require('jsonwebtoken');
 const userService = require("../services/userService")
 const userServ = new userService;
 
@@ -46,14 +47,14 @@ const login = async (req,res) => {
 const requestedOrgan = async (req,res) => {
     try {
         const organName = req.body.organName ; 
-        const bloodGroup = rq.body.bloodGroup;
+        const bloodGroup = req.body.bloodGroup;
         const token = req.headers['x-access-token'];
         if(!token){
              throw new Error('Token Not Found');
         }
 
         const decoded = jwt.verify(token,JWT_SECRET);
-        const userId = decoded.userId;
+        const userId = decoded.id;
         const role=decoded.role;
 
         const requestOrgan =await userServ.requestOrgan({
@@ -81,7 +82,7 @@ const createDonation = async (req,res) => {
     try {
         const token = req.headers['x-access-token'];
         const organName = req.body.organName;
-        const bloodGroup = req.body.organName;
+        const bloodGroup = req.body.bloodGroup;
         if(!token){
             throw new error('Not authenticated!!');
         }

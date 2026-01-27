@@ -14,8 +14,7 @@ const requestedOrgan = new mongoose.Schema({
         ref : "Hospital"
     },
     doctorName : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "User"
+        type : String
     },
     status : {
         type : String,

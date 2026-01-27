@@ -1,5 +1,6 @@
 const DonatedOrgan = require("../models/DonatedOrgan");
 const User = require("../models/User");
+const RequestedOrgan = require('../models/RequestedOrgan');
 
 class userRepository {
 
@@ -14,7 +15,7 @@ class userRepository {
     }
     async findUser(data){
         try {
-            const user = await User.find({email:data.email});
+            const user = await User.findOne({email:data.email});
             return user;
         } catch (error) {
             console.log(error);
