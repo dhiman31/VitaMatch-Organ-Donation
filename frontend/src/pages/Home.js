@@ -15,7 +15,7 @@ function Home() {
         Already have an account?{" "}
         <span
           onClick={() => navigate("/login")}
-          className="text-blue-700"
+          className="text-blue-700 pointer"
         >
           Login
         </span>
