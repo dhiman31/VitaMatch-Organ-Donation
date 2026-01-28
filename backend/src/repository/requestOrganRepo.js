@@ -36,6 +36,18 @@ class requestOrgan {
             throw new Error('Problem in repository')
         }
     }
+
+    // find all by organ and bloodGroup
+    async findAllWaiting(organName , bloodGroup){
+        try {
+            const organs = await DonatedOrgan.find({organName , bloodGroup , status : "WAITING"})
+            return organs
+        } catch (error) {
+            console.log(error)
+            throw new Error('Problem in repository')
+        }
+    }
+
 }
 
 module.exports = requestOrgan;
