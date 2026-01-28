@@ -22,6 +22,9 @@ class doctorService{
           throw new Error("Error in organ request");
         }
     }
+
+
+
 }
 
 module.exports = doctorService;
