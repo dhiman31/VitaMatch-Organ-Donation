@@ -18,7 +18,7 @@ class UserService {
 
       const hospitalObj = await Hospital.findOne({
         name: data.hospitalName,
-        city: data.city,
+        city: data.address,
       }).select("_id");
 
       if (!hospitalObj) {

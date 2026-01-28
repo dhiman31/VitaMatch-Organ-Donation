@@ -29,7 +29,7 @@ class doctorService{
 
     async findAllAvailable(organName,bloodGroup){
       try {
-        const availableOrgans = await this.donateOrganRepo.findAllAvailable(data.organName , data.bloodGroup)
+        const availableOrgans = await this.donateOrganRepo.findAllAvailable(organName , bloodGroup)
         return availableOrgans;
       } catch (error) {
         console.log(error);
@@ -39,18 +39,22 @@ class doctorService{
 
     async accept(data){
       try {
-        const selectedOrgan = await DonatedOrgan.findById(data.organId)
-        const allocation = await Allocation.create({
-          donorType : selectedOrgan.type,
-          donorId : selectedOrgan.donorId,
-          requestDoctorName : data.doctorName,
-          hospitalId : data.hospitalId,
-          status : "Matched"
-        })
+        const selectedOrgan = await DonatedOrgan.findById(data.organId);
+        if (!selectedOrgan) {
+          throw new Error("Organ not found");
+        }
 
-        selectedOrgan.status = "ALLOCATED"
-        selectedOrgan.allocationId = allocation.id
-        selectedOrgan.save();
+        const allocation = await Allocation.create({
+          donorType: selectedOrgan.donor,
+          donorId: selectedOrgan.donorId,
+          requestDoctorName: data.doctorName,
+          hospitalId: data.hospitalId,
+          status: "matched"
+        });
+
+        selectedOrgan.status = "ALLOCATED";
+        selectedOrgan.allocationId = allocation._id;
+        await selectedOrgan.save();
 
         return allocation;
 

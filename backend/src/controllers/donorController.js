@@ -1,8 +1,6 @@
 const { JWT_SECRET } = require("../config/serverConfig");
 const donorService = require("../services/donorService");
 const jwt = require('jsonwebtoken');
-const { findAllAvailable } = require("./doctorController");
-
 const donorServ = new donorService;
 
 const createDonation = async (req,res) => {
@@ -42,7 +40,7 @@ const createDonation = async (req,res) => {
 
 const findAllWaiting = async (req,res) => {
     try {
-        const waitingRequests = await donorServ.findAllWaiting(req.organName,req.bloodGroup);
+        const waitingRequests = await donorServ.findAllWaiting(req.body.organName,req.body.bloodGroup);
         if(!waitingRequests){
             console.log("No such requests")
         }
@@ -75,13 +73,27 @@ const acceptOneRequest = async (req,res) => {
         const decoded = jwt.verify(token,JWT_SECRET);
         const userId = decoded.id;
         const role=decoded.role;
+        
+        let type
+        if(role == 'DONOR'){
+            type = 'User'
+        }
+        else{
+            type = 'Hospital'
+        }
 
         const allocation = await donorServ.accept({
-            organId : userId,
-            donorType : role
+            organId : req.body.organId,
+            type : type,
+            donorId : userId
         })
 
-        return allocation;
+        return res.status(201).json({
+            data : allocation,
+            success : true,
+            message : 'Successfully matched',
+            err : {}
+        });
 
     } catch (error) {
         console.log(error)

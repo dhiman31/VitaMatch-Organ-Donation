@@ -41,7 +41,7 @@ const requestedOrgan = async (req,res) => {
 
 const findAllAvailable = async (req,res) => {
     try {
-        const availableOrgans = await doctorServ.findAllAvailable(req.organName,req.bloodGroup);
+        const availableOrgans = await doctorServ.findAllAvailable(req.body.organName,req.body.bloodGroup);
         if(!availableOrgans){
             console.log("No such available organs")
         }
@@ -87,7 +87,13 @@ const acceptOneOrgan = async (req,res) => {
             hospitalId : doctor.hospitalId
         })
 
-        return allocation;
+        return res.status(201).json({
+            data : allocation,
+            succes : true,
+            message : 'Successfully matched',
+            err : {}
+        })
+
 
     } catch (error) {
         console.log(error)

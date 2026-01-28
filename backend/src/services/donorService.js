@@ -43,9 +43,9 @@ class donorService {
         }
     }
 
-    async findAllWaiting(data){
+    async findAllWaiting(organName,bloodGroup){
       try {
-        const availableOrgans = await this.requestOrganRepo.findAllWaiting(data.organName , data.bloodGroup)
+        const availableOrgans = await this.requestOrganRepo.findAllWaiting(organName , bloodGroup)
         return availableOrgans;
       } catch (error) {
         console.log(error);
