@@ -82,6 +82,13 @@ class DoctorService {
     }
 }
 
+async getDoctorAllocations(doctorId, status){
+    try {
+        return await this.DoctorRepository.getDoctorAllocations(doctorId, status);
+    } catch (error) {
+        throw error;
+    }
+}
 
 }
 

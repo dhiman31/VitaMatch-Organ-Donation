@@ -101,9 +101,31 @@ const doctorDashboard = async (req, res) => {
     }
 };
 
+const getDoctorAllocations = async (req, res) => {
+    try {
+        const doctorId = req.user.id; // from auth
+        const { status } = req.query;
+
+        const data = await doctorServ.getDoctorAllocations(doctorId, status);
+
+        res.status(200).json({
+            success: true,
+            message: "Doctor allocations fetched",
+            data
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     requestOrgan,
     acceptOrgan,
     findAllAvailable,
-    doctorDashboard
+    doctorDashboard,
+    getDoctorAllocations
 }

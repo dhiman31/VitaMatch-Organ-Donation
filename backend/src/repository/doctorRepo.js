@@ -2,6 +2,7 @@ const DonatedOrgan = require('../models/DonatedOrgan');
 const Hospital = require('../models/Hospital');
 const RequestedOrgan = require('../models/RequestedOrgan');
 const User = require('../models/User');
+const Allocation = require("../models/Allocation");
 
 class DoctorRepository {
 
@@ -73,6 +74,36 @@ class DoctorRepository {
         }
     }
 
+    async getDoctorAllocations(doctorId, statusFilter) {
+        try {
+            // 1️⃣ Find all requests created by this doctor
+            const doctorRequests = await RequestedOrgan.find({ doctorId }).select("_id");
+            const requestIds = doctorRequests.map(r => r._id);
+
+            // 2️⃣ Build status filter
+            let statusQuery = {};
+            if (statusFilter === "ALL_ACTIVE") {
+                statusQuery.status = { $in: ["PENDING_CONFIRMATION", "MATCHED", "IN_TRANSIT"] };
+            } else if (statusFilter && statusFilter !== "ALL") {
+                statusQuery.status = statusFilter;
+            }
+
+            // 3️⃣ Fetch allocations only for this doctor's requests
+            const allocations = await Allocation.find({
+                requestId: { $in: requestIds },
+                ...statusQuery
+            })
+            .populate("organId", "organName bloodGroup status donorId")
+            .populate("requestId", "organName urgencyScore status")
+            .populate("hospitalId", "name");
+
+            return allocations;
+
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
 
 }
 
