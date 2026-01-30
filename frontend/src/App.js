@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import DonorDashboard from './pages/DonorDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+import LearnMore from "./pages/LearnMore";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path='/doctor-dashboard' element={<DoctorDashboard/>}></Route>
         <Route path='/login' element={<Login/>}></Route>
         <Route path='/signup' element={<Signup/>}></Route>
+        <Route path="/learn-more" element={<LearnMore />} />
       </Routes>
     </div>
   );
