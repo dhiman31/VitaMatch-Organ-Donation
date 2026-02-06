@@ -48,7 +48,8 @@ const findAllAvailable = async (req, res) => {
       await doctorServ.findAllAvailable(
         {
           organName: req.query.organName,
-          bloodGroup: req.query.bloodGroup
+          bloodGroup: req.query.bloodGroup,
+          urgencyScore: req.query.urgencyScore
         },
         doctorId
       );
@@ -145,10 +146,86 @@ const getDoctorAllocations = async (req, res) => {
   }
 };
 
+const dispatchOrgan = async (req, res) => {
+  try {
+    const { allocationId } = req.body;
+
+    const result =
+      await doctorServ.dispatchOrgan(
+        allocationId,
+        req.user.id
+      );
+
+    res.json({
+      success: true,
+      message: "Organ dispatched",
+      data: result
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const completeAllocation = async (req, res) => {
+  try {
+    const { allocationId } = req.body;
+
+    const result =
+      await doctorServ.completeAllocation(
+        allocationId,
+        req.user.id
+      );
+
+    res.json({
+      success: true,
+      message: "Allocation completed",
+      data: result
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const failAllocation = async (req, res) => {
+  try {
+    const { allocationId, reason } = req.body;
+
+    const result =
+      await doctorServ.failAllocation(
+        allocationId,
+        reason,
+        req.user.id
+      );
+
+    res.json({
+      success: true,
+      message: "Allocation failed",
+      data: result
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   requestOrgan,
   findAllAvailable,
   acceptOrgan,
   doctorDashboard,
-  getDoctorAllocations
+  getDoctorAllocations,
+  failAllocation,
+  completeAllocation,
+  dispatchOrgan
 };

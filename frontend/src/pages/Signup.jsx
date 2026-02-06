@@ -69,7 +69,7 @@ const Signup = () => {
             type="button"
             onClick={() => setFormData(p => ({ ...p, role: "DONOR" }))}
             className={`px-4 py-2 rounded-full ${
-              formData.role === "donor" ? "bg-blue-600 text-white" : "border"
+              formData.role === "DONOR" ? "bg-blue-600 text-white" : "border"
             }`}
           >
             Donor

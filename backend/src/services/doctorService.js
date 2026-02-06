@@ -5,55 +5,83 @@ const RequestedOrgan = require("../models/RequestedOrgan");
 const Notification = require("../models/Notification");
 const DistanceService = require("./distanceService");
 const User = require("../models/User");
+const MatchScoreService = require("./matchScoreService");
+const {validateAllocationTransition} = require("./allocationStateService");
 
 class DoctorService {
 
   constructor() {
     this.DoctorRepository = new DoctorRepository();
     this.distanceService = new DistanceService();
+    this.matchScoreService = new MatchScoreService();
   }
 
   async requestOrgan(data) {
     return await this.DoctorRepository.createRequest(data);
   }
 
-  async findAllAvailable(data, doctorId) {
+async findAllAvailable(data, doctorId) {
 
-    const organs =
-      await this.DoctorRepository.findAllAvailable(data);
+  const organs =
+    await this.DoctorRepository.findAllAvailable(data);
 
-    const doctor = await User.findById(doctorId);
+  const doctor = await User.findById(doctorId);
 
-    if (!doctor || !doctor.location)
-      throw new Error("Doctor location missing");
+  if (!doctor || !doctor.location)
+    throw new Error("Doctor location missing");
 
-    const enrichedOrgans = await Promise.all(
-      organs.map(async (organ) => {
+  const enrichedOrgans = await Promise.all(
 
-        if (!organ.location) {
-          return {
-            ...organ.toObject(),
-            distance: null,
-            duration: null
-          };
-        }
+    organs.map(async (organ) => {
 
-        const route =
-          await this.distanceService.getDistance(
-            doctor.location,
-            organ.location
-          );
-
+      if (!organ.location) {
         return {
           ...organ.toObject(),
-          distance: route.distance,
-          duration: route.duration
+          distance: null,
+          duration: null,
+          distanceKm: null,
+          matchScore: 0,
+          riskLevel: "UNKNOWN",
+          recommendation: "INSUFFICIENT_DATA"
         };
-      })
-    );
+      }
 
-    return enrichedOrgans;
-  }
+      const route =
+        await this.distanceService.getDistance(
+          doctor.location,
+          organ.location
+        );
+
+      const distanceKm =
+        route.distance
+          ? parseFloat(route.distance)
+          : null;
+
+      const scoreData =
+        this.matchScoreService.calculateScore({
+          organName: organ.organName,
+          urgencyScore: Number(data.urgencyScore || 5),
+          distanceKm
+        });
+
+      return {
+        ...organ.toObject(),
+        distance: route.distance,
+        duration: route.duration,
+        distanceKm,
+        matchScore: scoreData.matchScore,
+        riskLevel: scoreData.riskLevel,
+        recommendation: scoreData.recommendation
+      };
+    })
+  );
+
+  enrichedOrgans.sort(
+    (a, b) => b.matchScore - a.matchScore
+  );
+
+  return enrichedOrgans;
+}
 
   async acceptOrgan({ organId, requestId }) {
 
@@ -109,10 +137,124 @@ class DoctorService {
     return { myRequests, hospitalRequests };
   }
 
-  async getDoctorAllocations(doctorId, status) {
-    return await this.DoctorRepository
-      .getDoctorAllocations(doctorId, status);
+async getDoctorAllocations(doctorId, status) {
+  return await this.DoctorRepository
+    .getDoctorAllocations(doctorId, status);
+}
+
+  async validateDoctorOwnership(allocationId, doctorId) {
+
+  const allocation = await Allocation.findById(allocationId);
+  if (!allocation) throw new Error("Allocation not found");
+
+  const doctor = await User.findById(doctorId);
+  if (!doctor) throw new Error("Doctor not found");
+
+  if (doctor.role !== "DOCTOR")
+    throw new Error("Only doctors allowed");
+
+  if (
+    !doctor.hospitalId ||
+    allocation.hospitalId.toString() !==
+    doctor.hospitalId.toString()
+  ) {
+    throw new Error("Unauthorized hospital access");
   }
+
+  return allocation;
+}
+
+async dispatchOrgan(allocationId, doctorId) {
+
+  const allocation =
+    await this.validateDoctorOwnership(
+      allocationId,
+      doctorId
+    );
+
+  validateAllocationTransition(
+    allocation.status,
+    "DISPATCHED"
+  );
+
+  allocation.status = "DISPATCHED";
+  allocation.dispatchTime = new Date();
+  allocation.dispatchedBy = doctorId;
+
+  await allocation.save();
+
+  return allocation;
+}
+
+async completeAllocation(allocationId, doctorId) {
+
+  const allocation =
+    await this.validateDoctorOwnership(
+      allocationId,
+      doctorId
+    );
+
+  validateAllocationTransition(
+    allocation.status,
+    "COMPLETED"
+  );
+
+  const organ =
+    await DonatedOrgan.findById(allocation.organId);
+
+  const request =
+    await RequestedOrgan.findById(allocation.requestId);
+
+  allocation.status = "COMPLETED";
+  allocation.completionTime = new Date();
+  allocation.completedBy = doctorId;
+
+  organ.status = "TRANSPLANTED";
+  request.status = "TRANSPLANTED";
+
+  await allocation.save();
+  await organ.save();
+  await request.save();
+
+  return allocation;
+}
+
+async failAllocation(allocationId, reason, doctorId) {
+
+  const allocation =
+    await this.validateDoctorOwnership(
+      allocationId,
+      doctorId
+    );
+
+  validateAllocationTransition(
+    allocation.status,
+    "FAILED"
+  );
+
+  const organ =
+    await DonatedOrgan.findById(allocation.organId);
+
+  const request =
+    await RequestedOrgan.findById(allocation.requestId);
+
+  allocation.status = "FAILED";
+  allocation.failureReason = reason;
+
+  organ.status = "AVAILABLE";
+  request.status = "WAITING";
+  request.allocationId = null;
+
+  await allocation.save();
+  await organ.save();
+  await request.save();
+
+  return allocation;
+}
+
+
+
+
 }
 
 module.exports = DoctorService;
