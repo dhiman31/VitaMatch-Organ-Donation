@@ -10,10 +10,11 @@ const createDonation = async (req,res) => {
         }
         const donorId = req.user.id;
         const role = req.user.role;
+        const address = req.body.address;
         const organName = req.body.organName;
         const bloodGroup = req.body.bloodGroup;
         const donateOrgan = await donorServ.createDonation({
-            organName,bloodGroup,donorId,role
+            organName,bloodGroup,donorId,role,address
         })
         return res.status(201).json({
             data : donateOrgan,

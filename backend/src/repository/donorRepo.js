@@ -11,7 +11,6 @@ class DonorRepository {
         const donorUser = await User.findById(data.donorId);
         if (!donorUser) throw new Error("Donor not found");
 
-        data.address = donorUser.address;
         data.phoneNumber = donorUser.phoneNumber;
 
         const donation = await DonatedOrgan.create(data);

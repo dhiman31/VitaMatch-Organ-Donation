@@ -7,7 +7,7 @@ const requestedOrganSchema = new mongoose.Schema({
     },
     bloodGroup: {
         type: String,
-        enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+        enum: ["A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG", "O_POS", "O_NEG"]
     },
     hospitalId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -35,6 +35,10 @@ const requestedOrganSchema = new mongoose.Schema({
     waitingSince: {
         type: Date,
         default: Date.now
+    },
+    location: {
+        lat: Number,
+        lng: Number
     },
     allocationId: {
         type: mongoose.Schema.Types.ObjectId,

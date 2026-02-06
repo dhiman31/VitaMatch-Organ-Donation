@@ -5,9 +5,13 @@ const donatedOrganSchema = new mongoose.Schema({
         type: String,
         enum: ["Heart", "Liver", "Lungs", "Kidney", "Eye"]
     },
+    location: {
+        lat: Number,
+        lng: Number
+    },
     bloodGroup: {
         type: String,
-        enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+        enum: ["A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG", "O_POS", "O_NEG"]
     },
     role: {
         type: String,

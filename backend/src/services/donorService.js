@@ -6,22 +6,25 @@ const requestOrgan = require("../repository/doctorRepo");
 const userRepository = require("../repository/userRepo");
 const Notification = require("../models/Notification");
 const DonatedOrgan = require("../models/DonatedOrgan");
+const GeocodingService = require("./geocodingService");
 
 class DonorService {
     constructor(){
         this.userRepository = new userRepository
         this.DonorRepository = new DonorRepository
         this.requestOrganRepo = new requestOrgan
+        this.geocodingService = new GeocodingService();
     }
 
-    async createDonation(data){
-      try {
-        const donation = await this.DonorRepository.createDonation(data);
-        return donation;
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
+    async createDonation(data) {
+      const donor = await User.findById(data.donorId);
+      if (!donor) throw new Error("Donor not found");
+
+      data.address = donor.address;
+      data.location = donor.location;
+      data.phoneNumber = donor.phoneNumber;
+
+      return await this.DonorRepository.createDonation(data);
     }
 
     async confirmDonation(donatedOrganId,donorId,consentType) {
