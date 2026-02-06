@@ -28,7 +28,7 @@ const DoctorDashboard = () => {
 
   const authHeader = {
     headers: {
-      Authorization: `Bearer ${token}`,
+      "x-access-token": localStorage.getItem("token")
     },
   };
 

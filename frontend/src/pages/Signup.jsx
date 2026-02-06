@@ -16,7 +16,6 @@ const Signup = () => {
     name: "",
     email: "",
     password: "",
-    hospitalID: "",
     phone: "",
     address: "",
     hospitalName: "",
@@ -69,7 +68,7 @@ const Signup = () => {
             type="button"
             onClick={() => setFormData(p => ({ ...p, role: "DONOR" }))}
             className={`px-4 py-2 rounded-full ${
-              formData.role === "donor" ? "bg-blue-600 text-white" : "border"
+              formData.role === "DONOR" ? "bg-blue-600 text-white" : "border"
             }`}
           >
             Donor
@@ -96,9 +95,6 @@ const Signup = () => {
 
           <input name="password" placeholder="Password" type="password" required className="border w-full p-2"
             value={formData.password} onChange={changeHandler} />
-
-          <input name="hospitalID" placeholder="Hospital ID" required className="border w-full p-2"
-            value={formData.hospitalID} onChange={changeHandler} />
 
           <input name="phone" placeholder="Phone" required className="border w-full p-2"
             value={formData.phone} onChange={changeHandler} />
