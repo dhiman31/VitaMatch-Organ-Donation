@@ -26,7 +26,7 @@ class DoctorRepository {
           { $push: { request: organ._id } }
         );
       }
-
+      console.log(organ);
       return organ;
 
     } catch (error) {

@@ -1,54 +1,75 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://localhost:5000/api/v1",
+});
 
 const Signup = () => {
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    role: 'donor',
-    name: '',
-    email: '',
-    password: '',
-    hospitalID: '',
-    phone: '',
-    address: '',
-    hospitalName: '',
-    city: '',
+    role: "DONOR",
+    name: "",
+    email: "",
+    password: "",
+    hospitalID: "",
+    phone: "",
+    address: "",
+    hospitalName: "",
+    city: "",
   });
 
-  function changeHandler(e) {
+  const changeHandler = (e) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
-  }
+  };
 
-  function submitHandler(e) {
+  const submitHandler = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    formData.role==='donor'? navigate('/donor-dashboard'):navigate('/doctor-dashboard');
-   
-  }
+    setLoading(true);
+
+    try {
+      // backend assumed:
+      // POST /user/signup
+
+      const res = await api.post("/user/signup", formData);
+
+      // save JWT
+      localStorage.setItem("token", res.data.data.token);
+
+      if (formData.role === "DONOR") {
+        navigate("/donor-dashboard");
+      } else {
+        navigate("/doctor-dashboard");
+      }
+
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-200 p-4">
 
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
-          Create Account
-        </h2>
 
-        {/* Role Selector */}
+        <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+
+        {/* ROLE */}
         <div className="flex justify-center gap-3 mb-6">
           <button
             type="button"
-            name="role"
-            value="donor"
-            onClick={changeHandler}
-            className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-              formData.role === "donor"
-                ? "bg-blue-600 text-white border-blue-600 shadow"
-                : "bg-white text-gray-700 border-gray-300"
+            onClick={() => setFormData(p => ({ ...p, role: "DONOR" }))}
+            className={`px-4 py-2 rounded-full ${
+              formData.role === "donor" ? "bg-blue-600 text-white" : "border"
             }`}
           >
             Donor
@@ -56,13 +77,9 @@ const Signup = () => {
 
           <button
             type="button"
-            name="role"
-            value="doctor"
-            onClick={changeHandler}
-            className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-              formData.role === "doctor"
-                ? "bg-blue-600 text-white border-blue-600 shadow"
-                : "bg-white text-gray-700 border-gray-300"
+            onClick={() => setFormData(p => ({ ...p, role: "DOCTOR" }))}
+            className={`px-4 py-2 rounded-full ${
+              formData.role === "DOCTOR" ? "bg-blue-600 text-white" : "border"
             }`}
           >
             Doctor
@@ -71,132 +88,50 @@ const Signup = () => {
 
         <form onSubmit={submitHandler} className="space-y-4">
 
-  {/* FORM GRID */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input name="name" placeholder="Name" required className="border w-full p-2"
+            value={formData.name} onChange={changeHandler} />
 
-    <div className="col-span-2">
-      <label className="text-sm font-semibold text-gray-700">Name</label>
-      <input
-        required
-        name="name"
-        type="text"
-        value={formData.name}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          <input name="email" placeholder="Email" required className="border w-full p-2"
+            value={formData.email} onChange={changeHandler} />
 
-    <div>
-      <label className="text-sm font-semibold text-gray-700">Email</label>
-      <input
-        required
-        name="email"
-        type="email"
-        value={formData.email}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          <input name="password" placeholder="Password" type="password" required className="border w-full p-2"
+            value={formData.password} onChange={changeHandler} />
 
-    <div>
-      <label className="text-sm font-semibold text-gray-700">Password</label>
-      <input
-        required
-        name="password"
-        type="password"
-        value={formData.password}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          <input name="hospitalID" placeholder="Hospital ID" required className="border w-full p-2"
+            value={formData.hospitalID} onChange={changeHandler} />
 
-    <div>
-      <label className="text-sm font-semibold text-gray-700">Hospital ID</label>
-      <input
-        required
-        name="hospitalID"
-        type="text"
-        value={formData.hospitalID}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          <input name="phone" placeholder="Phone" required className="border w-full p-2"
+            value={formData.phone} onChange={changeHandler} />
 
-    <div>
-      <label className="text-sm font-semibold text-gray-700">Phone</label>
-      <input
-        required
-        name="phone"
-        type="tel"
-        value={formData.phone}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          <input name="address" placeholder="Address" required className="border w-full p-2"
+            value={formData.address} onChange={changeHandler} />
 
-    <div className="col-span-2">
-      <label className="text-sm font-semibold text-gray-700">Address</label>
-      <input
-        required
-        name="address"
-        type="text"
-        value={formData.address}
-        onChange={changeHandler}
-        className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          {formData.role === "DOCTOR" && (
+            <>
+              <input name="hospitalName" placeholder="Hospital Name" required className="border w-full p-2"
+                value={formData.hospitalName} onChange={changeHandler} />
 
-    {/* Doctor extra fields */}
-    {formData.role === "doctor" && (
-      <>
-        <div>
-          <label className="text-sm font-semibold text-gray-700">Hospital Name</label>
-          <input
-            required
-            name="hospitalName"
-            type="text"
-            value={formData.hospitalName}
-            onChange={changeHandler}
-            className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+              <input name="city" placeholder="City" required className="border w-full p-2"
+                value={formData.city} onChange={changeHandler} />
+            </>
+          )}
 
-        <div>
-          <label className="text-sm font-semibold text-gray-700">City</label>
-          <input
-            required
-            name="city"
-            type="text"
-            value={formData.city}
-            onChange={changeHandler}
-            className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </>
-    )}
-  </div>
+          <button disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded">
+            {loading ? "Creating..." : "Register"}
+          </button>
 
-  <button
-    type="submit"
-    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-all mt-4"
-  >
-    Register
-  </button>
-</form>
+        </form>
 
-
-        <p className="text-center text-gray-600 text-sm mt-4">
-          Already have an account?{" "}
-          <span
-            onClick={() => navigate('/login')}
-            className="text-blue-600 font-semibold cursor-pointer hover:underline"
-          >
+        <p className="text-center text-sm mt-4">
+          Already have an account?
+          <span onClick={() => navigate("/login")} className="text-blue-600 ml-1 cursor-pointer">
             Login
           </span>
         </p>
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Signup
+export default Signup;
