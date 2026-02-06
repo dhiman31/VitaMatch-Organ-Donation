@@ -8,6 +8,10 @@ import logo from "../assets/logo.png";
 
 const DonorDashboard = () => {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [organId,setOrganId]= useState(null);
+  const [consent, setConsent] = useState(false);
+  const [consentType, setConsentType] = useState("");
 
   const [activeTab, setActiveTab] = useState("needs");
   const [showForm, setShowForm] = useState(false);
@@ -19,6 +23,7 @@ const DonorDashboard = () => {
   const [formData, setFormData] = useState({
     organ: "",
     bloodgroup: "",
+    consent:false
   });
 
   const token = localStorage.getItem("token");
@@ -72,13 +77,40 @@ const DonorDashboard = () => {
   const submitDonation = async (e) => {
     e.preventDefault();
 
+
     try {
-      await axios.post(
+
+      const res = await axios.post(
         "http://localhost:5000/api/v1/donor/donateOrgan",
         {
           organName: formData.organ,
           bloodGroup: formData.bloodgroup,
           requestId: selectedRequest?._id,
+        },
+        {
+          headers: {
+           "x-access-token": localStorage.getItem("token")
+          },
+        }
+      );
+      console.log(res.data);
+      setOrganId(res.data.data._id);
+      setStep(2);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+const submitConsent = async (e) => {
+    e.preventDefault();
+
+    try {
+
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/donor/confirmDonation",
+        {
+          organId:organId,
+          consentType:consentType
         },
         {
           headers: {
@@ -93,16 +125,21 @@ const DonorDashboard = () => {
     } catch (err) {
       console.log(err);
     }
-  };
+  };  
 
   const openDonationForm = (req) => {
-    setSelectedRequest(req);
-    setFormData({
-      organ: req?.organName || "",
-      bloodgroup: req?.bloodGroup || "",
-    });
-    setShowForm(true);
-  };
+  setSelectedRequest(req);
+  setFormData({
+    organ: req?.organName || "",
+    bloodgroup: req?.bloodGroup || "",
+  });
+
+  setConsent(false);
+  setConsentType("");
+  setStep(1);
+  setShowForm(true);
+};
+
 
   /* ================= UI ================= */
 
@@ -138,39 +175,85 @@ const DonorDashboard = () => {
 
         <h1 className="text-3xl font-bold mb-6">Welcome Donor ❤️</h1>
 
-        {/* FORM */}
-        {showForm && (
-          <div className="bg-white p-6 rounded-xl shadow mb-10 max-w-xl">
+       {showForm && (
+  <div className="bg-white p-6 rounded-xl shadow mb-10 max-w-xl">
 
-            <form onSubmit={submitDonation} className="space-y-3">
+    {/* STEP 1 */}
+    {step === 1 && (
+      <form onSubmit={submitDonation} className="space-y-3">
+        <h2 className="text-xl font-bold">Donation Details</h2>
 
-              <input
-                className="border w-full p-2"
-                placeholder="Organ"
-                value={formData.organ}
-                onChange={(e) =>
-                  setFormData({ ...formData, organ: e.target.value })
-                }
-                required
-              />
+        <input
+          className="border w-full p-2"
+          placeholder="Organ"
+          value={formData.organ}
+          onChange={(e) =>
+            setFormData({ ...formData, organ: e.target.value })
+          }
+          required
+        />
 
-              <input
-                className="border w-full p-2"
-                placeholder="Blood Group"
-                value={formData.bloodgroup}
-                onChange={(e) =>
-                  setFormData({ ...formData, bloodgroup: e.target.value })
-                }
-                required
-              />
+        <input
+          className="border w-full p-2"
+          placeholder="Blood Group"
+          value={formData.bloodgroup}
+          onChange={(e) =>
+            setFormData({ ...formData, bloodgroup: e.target.value })
+          }
+          required
+        />
 
-              <button className="bg-blue-600 text-white w-full py-2 rounded">
-                Donate
-              </button>
+        <button type="submit" className="bg-blue-600 text-white w-full py-2 rounded">
+          Continue
+        </button>
+      </form>
+    )}
 
-            </form>
-          </div>
-        )}
+    {/* STEP 2 */}
+    {step === 2 && (
+      <form onSubmit={submitConsent} className="space-y-4">
+        <h2 className="text-xl font-bold">Consent</h2>
+
+        <select
+          className="border w-full p-2"
+          value={consentType}
+          onChange={(e) => setConsentType(e.target.value)}
+          required
+        >
+          <option value="">Select Consent Type</option>
+          <option value="LIVING">Living Donation</option>
+          <option value="POST_DEATH">Deceased Donation</option>
+        </select>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            required
+          />
+          I voluntarily consent to donate my organ.
+        </label>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="flex-1 border py-2 rounded"
+          >
+            Back
+          </button>
+
+          <button type="submit" className="flex-1 bg-green-600 text-white py-2 rounded">
+            Confirm Donation
+          </button>
+        </div>
+      </form>
+    )}
+  </div>
+)}
+
+
 
         {/* NEEDS */}
         {activeTab === "needs" && !showForm && (

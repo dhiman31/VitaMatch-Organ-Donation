@@ -18,10 +18,15 @@ class UserService {
       await this.geocodingService.getCoordinates(data.address);
 
     if (data.role === "DONOR") {
-      return await this.userRepository.createUser({
+      const user =  await this.userRepository.createUser({
         ...data,
         location: coordinates
       });
+      return jwt.sign(
+          { id: user.id, email: user.email, role: user.role },
+          JWT_SECRET,
+          { expiresIn: "1h" }
+        );
     }
 
     const hospitalObj = await Hospital.findOne({
@@ -30,8 +35,7 @@ class UserService {
     }).select("_id");
 
     if (!hospitalObj) throw new Error("Hospital not found");
-
-    return await this.userRepository.createUser({
+    const user = await this.userRepository.createUser({
       name: data.name,
       email: data.email,
       password: data.password,
@@ -41,6 +45,12 @@ class UserService {
       address: data.address,
       location: coordinates
     });
+
+    return jwt.sign(
+          { id: user.id, email: user.email, role: user.role },
+          JWT_SECRET,
+          { expiresIn: "1h" }
+        );
   }
 
   async login(data) {

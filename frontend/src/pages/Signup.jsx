@@ -38,10 +38,10 @@ const Signup = () => {
       // POST /user/signup
 
       const res = await api.post("/user/signup", formData);
-
+      console.log(res);
       // save JWT
-      localStorage.setItem("token", res.data.data.token);
-
+      localStorage.setItem("token", res.data.data);
+      
       if (formData.role === "DONOR") {
         navigate("/donor-dashboard");
       } else {
