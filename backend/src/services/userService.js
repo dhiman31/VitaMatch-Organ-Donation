@@ -26,7 +26,7 @@ class UserService {
 
     const hospitalObj = await Hospital.findOne({
       name: data.hospitalName,
-      city: data.address
+      address: data.address
     }).select("_id");
 
     if (!hospitalObj) throw new Error("Hospital not found");
