@@ -16,7 +16,6 @@ const Signup = () => {
     name: "",
     email: "",
     password: "",
-    hospitalID: "",
     phone: "",
     address: "",
     hospitalName: "",
@@ -39,10 +38,10 @@ const Signup = () => {
       // POST /user/signup
 
       const res = await api.post("/user/signup", formData);
-
+      console.log(res);
       // save JWT
-      localStorage.setItem("token", res.data.data.token);
-
+      localStorage.setItem("token", res.data.data);
+      
       if (formData.role === "DONOR") {
         navigate("/donor-dashboard");
       } else {
@@ -96,9 +95,6 @@ const Signup = () => {
 
           <input name="password" placeholder="Password" type="password" required className="border w-full p-2"
             value={formData.password} onChange={changeHandler} />
-
-          <input name="hospitalID" placeholder="Hospital ID" required className="border w-full p-2"
-            value={formData.hospitalID} onChange={changeHandler} />
 
           <input name="phone" placeholder="Phone" required className="border w-full p-2"
             value={formData.phone} onChange={changeHandler} />

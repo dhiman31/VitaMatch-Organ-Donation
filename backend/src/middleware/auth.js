@@ -4,7 +4,7 @@ const { JWT_SECRET } = require("../config/serverConfig");
 const authMiddleware = (req, res, next) => {
   try {
     const token = req.headers["x-access-token"];
-
+    
     if (!token) {
       return res.status(401).json({
         success: false,

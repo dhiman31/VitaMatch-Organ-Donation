@@ -3,9 +3,9 @@ const userServ = new userService;
 
 const signup = async (req,res) => {
     try {
-        const user = await userServ.createUser(req.body);
+        const token = await userServ.createUser(req.body);
         return res.status(201).json({
-            data : user,
+            data : token,
             succes : true,
             message : 'User Signed up successfully',
             err : {}

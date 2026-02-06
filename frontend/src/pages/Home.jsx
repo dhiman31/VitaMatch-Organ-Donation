@@ -39,7 +39,7 @@ const Home = () => {
           {/* Center / Right */}
           <div className="flex items-center gap-6">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="hover:text-blue-600 transition"
             >
               Home

@@ -1,160 +1,271 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import impact from "../assets/impact.json";
 import logo from "../assets/logo.png";
 
 const DonorDashboard = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [organId,setOrganId]= useState(null);
+  const [consent, setConsent] = useState(false);
+  const [consentType, setConsentType] = useState("");
+
   const [activeTab, setActiveTab] = useState("needs");
   const [showForm, setShowForm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+
+  const [hospitalNeeds, setHospitalNeeds] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
 
   const [formData, setFormData] = useState({
     organ: "",
     bloodgroup: "",
-    consent: false,
+    consent:false
   });
 
-  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  const hospitalNeeds = [
-    { id: 1, hospital: "AIIMS Delhi", organ: "Kidney", blood: "O+", city: "Delhi", urgency: "High" },
-    { id: 2, hospital: "Apollo Hospital", organ: "Liver", blood: "A+", city: "Chennai", urgency: "Medium" },
-    { id: 3, hospital: "Fortis Hospital", organ: "Heart", blood: "B+", city: "Mumbai", urgency: "High" },
-  ];
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-  function openDonationForm(req) {
-    setSelectedRequest(req);
-    setFormData({
-      organ: req.organ || "",
-      bloodgroup: req.blood || "",
-      consent: false,
-    });
-    setShowForm(true);
-  }
+    fetchNeeds();
+    fetchMyRequests();
+  }, []);
 
-  function submitDonation(e) {
+  /* ================= API ================= */
+
+  const fetchNeeds = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/v1/donor/waitingOrgans",
+        {
+          headers: {
+            "x-access-token": localStorage.getItem("token")
+          },
+        }
+      );
+  
+      setHospitalNeeds(res.data.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchMyRequests = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/v1/donor/all",
+        {
+          headers: {
+            "x-access-token": localStorage.getItem("token")
+          },
+        }
+      );
+
+      setMyRequests(res.data.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const submitDonation = async (e) => {
     e.preventDefault();
-    setMyRequests(prev => [
-      ...prev,
-      {
-        ...selectedRequest,
-        organ: formData.organ,
-        blood: formData.bloodgroup,
-        status: "Pending",
-        type: selectedRequest.type || "hospital-request",
-      },
-    ]);
-    setShowForm(false);
-    setActiveTab("myRequests");
-  }
+
+
+    try {
+
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/donor/donateOrgan",
+        {
+          organName: formData.organ,
+          bloodGroup: formData.bloodgroup,
+          requestId: selectedRequest?._id,
+        },
+        {
+          headers: {
+           "x-access-token": localStorage.getItem("token")
+          },
+        }
+      );
+      console.log(res.data);
+      setOrganId(res.data.data._id);
+      setStep(2);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+const submitConsent = async (e) => {
+    e.preventDefault();
+
+    try {
+
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/donor/confirmDonation",
+        {
+          organId:organId,
+          consentType:consentType
+        },
+        {
+          headers: {
+           "x-access-token": localStorage.getItem("token")
+          },
+        }
+      );
+
+      setShowForm(false);
+      fetchMyRequests();
+      setActiveTab("myRequests");
+    } catch (err) {
+      console.log(err);
+    }
+  };  
+
+  const openDonationForm = (req) => {
+  setSelectedRequest(req);
+  setFormData({
+    organ: req?.organName || "",
+    bloodgroup: req?.bloodGroup || "",
+  });
+
+  setConsent(false);
+  setConsentType("");
+  setStep(1);
+  setShowForm(true);
+};
+
+
+  /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen flex bg-white text-gray-800">
+    <div className="min-h-screen flex">
 
       {/* SIDEBAR */}
-      <aside className="w-64 bg-gray-100 border-r p-6 hidden md:flex flex-col">
-        <div className="flex items-center gap-2 mb-10 cursor-pointer" onClick={() => navigate("/")}>
-          <img src={logo} alt="logo" className="h-10" />
-          {/* <h2 className="text-xl font-extrabold">VitaMatch</h2> */}
-        </div>
+      <aside className="w-64 border-r p-6 hidden md:flex flex-col">
+        <img
+          src={logo}
+          className="h-10 mb-10 cursor-pointer"
+          onClick={() => navigate("/")}
+        />
 
         <nav className="flex flex-col gap-4">
-          <button onClick={() => setActiveTab("needs")} className={`text-left ${activeTab === "needs" && "font-bold text-blue-600"}`}>
-            🏥 Hospital Needs
-          </button>
-          <button onClick={() => setActiveTab("voluntary")} className={`text-left ${activeTab === "voluntary" && "font-bold text-blue-600"}`}>
-            ❤️ Willing Donation
-          </button>
-          <button onClick={() => setActiveTab("myRequests")} className={`text-left ${activeTab === "myRequests" && "font-bold text-blue-600"}`}>
-            📄 My Requests
-          </button>
+          <button onClick={() => setActiveTab("needs")}>🏥 Hospital Needs</button>
+          <button onClick={() => setActiveTab("voluntary")}>❤️ Willing Donation</button>
+          <button onClick={() => setActiveTab("myRequests")}>📄 My Requests</button>
 
-          <button className="mt-auto text-left text-red-500" onClick={() => navigate("/login")}>
+          <button
+            className="mt-auto text-red-500"
+            onClick={() => {
+              localStorage.removeItem("token");
+              navigate("/login");
+            }}
+          >
             🚪 Logout
           </button>
         </nav>
       </aside>
 
-      {/* MAIN */}
-      <main className="flex-1 px-6 py-12 overflow-y-auto">
+      <main className="flex-1 p-10">
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="mb-10"
+        <h1 className="text-3xl font-bold mb-6">Welcome Donor ❤️</h1>
+
+       {showForm && (
+  <div className="bg-white p-6 rounded-xl shadow mb-10 max-w-xl">
+
+    {/* STEP 1 */}
+    {step === 1 && (
+      <form onSubmit={submitDonation} className="space-y-3">
+        <h2 className="text-xl font-bold">Donation Details</h2>
+
+        <input
+          className="border w-full p-2"
+          placeholder="Organ"
+          value={formData.organ}
+          onChange={(e) =>
+            setFormData({ ...formData, organ: e.target.value })
+          }
+          required
+        />
+
+        <input
+          className="border w-full p-2"
+          placeholder="Blood Group"
+          value={formData.bloodgroup}
+          onChange={(e) =>
+            setFormData({ ...formData, bloodgroup: e.target.value })
+          }
+          required
+        />
+
+        <button type="submit" className="bg-blue-600 text-white w-full py-2 rounded">
+          Continue
+        </button>
+      </form>
+    )}
+
+    {/* STEP 2 */}
+    {step === 2 && (
+      <form onSubmit={submitConsent} className="space-y-4">
+        <h2 className="text-xl font-bold">Consent</h2>
+
+        <select
+          className="border w-full p-2"
+          value={consentType}
+          onChange={(e) => setConsentType(e.target.value)}
+          required
         >
-          <h1 className="text-4xl font-extrabold text-gray-900">Welcome Donor ❤️</h1>
-          <p className="text-gray-600 mt-2">Choose how you want to help save lives.</p>
-        </motion.div>
+          <option value="">Select Consent Type</option>
+          <option value="LIVING">Living Donation</option>
+          <option value="POST_DEATH">Deceased Donation</option>
+        </select>
 
-        {/* FORM */}
-        {showForm && (
-          <motion.div className="max-w-xl bg-white rounded-3xl p-8 shadow-lg mb-12">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">
-              {selectedRequest?.type === "voluntary" ? "Voluntary Donation" : "Donate to Hospital"}
-            </h2>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            required
+          />
+          I voluntarily consent to donate my organ.
+        </label>
 
-            <form onSubmit={submitDonation} className="space-y-4">
-              <input
-                className="w-full border rounded-lg px-4 py-2"
-                placeholder="Organ Name"
-                value={formData.organ}
-                onChange={(e) => setFormData({ ...formData, organ: e.target.value })}
-                required
-              />
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="flex-1 border py-2 rounded"
+          >
+            Back
+          </button>
 
-              <select
-                className="w-full border rounded-lg px-4 py-2"
-                value={formData.bloodgroup}
-                onChange={(e) => setFormData({ ...formData, bloodgroup: e.target.value })}
-                required
-              >
-                <option value="">Select Blood Group</option>
-                <option>A+</option><option>A-</option>
-                <option>B+</option><option>B-</option>
-                <option>O+</option><option>O-</option>
-                <option>AB+</option><option>AB-</option>
-              </select>
+          <button type="submit" className="flex-1 bg-green-600 text-white py-2 rounded">
+            Confirm Donation
+          </button>
+        </div>
+      </form>
+    )}
+  </div>
+)}
 
-              <label className="flex gap-2 text-sm text-gray-600">
-                <input type="checkbox" required />
-                I voluntarily consent to donate this organ.
-              </label>
 
-              <div className="flex gap-4">
-                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold">
-                  Submit
-                </button>
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border py-2 rounded-lg">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        )}
 
-        {/* HOSPITAL NEEDS */}
+        {/* NEEDS */}
         {activeTab === "needs" && !showForm && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {hospitalNeeds.map(req => (
-              <motion.div
-                key={req.id}
-                className="bg-white border rounded-2xl p-6 shadow"
-              >
-                {req.urgency === "High" && (
-                  <span className="text-xs text-red-600 font-bold">URGENT</span>
-                )}
-                <h3 className="text-xl font-bold">{req.hospital}</h3>
-                <p>Organ: {req.organ}</p>
-                <p>Blood: {req.blood}</p>
-                <p>City: {req.city}</p>
+          <div className="grid md:grid-cols-2 gap-6">
+            {hospitalNeeds.map((h) => (
+              <motion.div key={h._id} className="border p-6 rounded-xl shadow">
+                <h3 className="font-bold">{h.organName}</h3>
+                <p>{h.bloodGroup}</p>
 
                 <button
-                  onClick={() => openDonationForm({ ...req, type: "hospital-request" })}
-                  className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg"
+                  onClick={() => openDonationForm(h)}
+                  className="bg-blue-600 text-white mt-3 px-3 py-1 rounded"
                 >
                   I Can Donate
                 </button>
@@ -165,11 +276,10 @@ const DonorDashboard = () => {
 
         {/* VOLUNTARY */}
         {activeTab === "voluntary" && !showForm && (
-          <div className="max-w-xl bg-white rounded-2xl p-8 shadow">
-            <h2 className="text-2xl font-bold mb-4">Voluntary Donation</h2>
+          <div className="max-w-xl">
             <button
-              onClick={() => openDonationForm({ type: "voluntary" })}
-              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold"
+              onClick={() => openDonationForm({})}
+              className="bg-green-600 text-white w-full py-3 rounded"
             >
               Proceed to Donate
             </button>
@@ -180,19 +290,14 @@ const DonorDashboard = () => {
 
         {/* MY REQUESTS */}
         {activeTab === "myRequests" && (
-          <div className="bg-white rounded-2xl p-8 shadow max-w-3xl">
-            <h2 className="text-2xl font-bold mb-6">My Requests</h2>
-
+          <div className="max-w-3xl">
             {myRequests.length === 0 ? (
-              <p className="text-gray-500">No requests yet.</p>
+              <p>No requests yet</p>
             ) : (
-              myRequests.map((req, i) => (
-                <div key={i} className="border rounded-lg p-4 flex justify-between">
-                  <div>
-                    <p className="font-semibold">{req.hospital || "Voluntary Donation"}</p>
-                    <p className="text-sm text-gray-500">{req.organ} • {req.blood}</p>
-                  </div>
-                  <span className="text-yellow-600 font-semibold">{req.status}</span>
+              myRequests.map((r) => (
+                <div key={r._id} className="border p-4 mb-3 rounded shadow">
+                  <p>{r.organName}</p>
+                  <span>{r.status}</span>
                 </div>
               ))
             )}
