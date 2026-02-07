@@ -1,12 +1,17 @@
 const crypto = require("crypto");
 const { ethers } = require("ethers");
 
+const ABI = [
+  "event AllocationRecorded(bytes32 hash,uint256 timestamp)",
+  "function recordAllocation(bytes32 _hash) public"
+];
+
 class BlockchainService {
 
   constructor() {
 
     this.provider = new ethers.JsonRpcProvider(
-      process.env.RPC_URL
+      process.env.ALCHEMY_RPC_URL
     );
 
     this.wallet = new ethers.Wallet(
@@ -16,9 +21,7 @@ class BlockchainService {
 
     this.contract = new ethers.Contract(
       process.env.CONTRACT_ADDRESS,
-      [
-        "function recordAllocation(bytes32 _hash) public"
-      ],
+      ABI,
       this.wallet
     );
   }
@@ -30,9 +33,12 @@ class BlockchainService {
       .digest("hex");
   }
 
-  async writeHashToBlockchain(hash) {
+  async storeHash(hash) {
+
     const tx =
-      await this.contract.recordAllocation("0x" + hash);
+      await this.contract.recordAllocation(
+        "0x" + hash
+      );
 
     await tx.wait();
 

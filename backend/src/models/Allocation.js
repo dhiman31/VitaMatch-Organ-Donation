@@ -47,8 +47,6 @@ const allocationSchema = new mongoose.Schema({
     default: null
   },
 
-  // -------- BLOCKCHAIN --------
-
   lastBlockchainHash: {
     type: String,
     default: null
@@ -61,8 +59,8 @@ const allocationSchema = new mongoose.Schema({
       txHash: String,
       timestamp: Date
     }
-  ]
-
+  ],
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model("Allocation", allocationSchema);

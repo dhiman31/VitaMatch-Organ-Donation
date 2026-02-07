@@ -10,47 +10,53 @@ const GeocodingService = require("./geocodingService");
 const BlockchainService = require("./blockchainService");
 
 class DonorService {
-    constructor(){
-        this.userRepository = new userRepository
-        this.DonorRepository = new DonorRepository
-        this.requestOrganRepo = new requestOrgan
-        this.geocodingService = new GeocodingService();
-        this.blockchainService = new BlockchainService();
+
+  constructor() {
+    this.userRepository = new userRepository();
+    this.DonorRepository = new DonorRepository();
+    this.requestOrganRepo = new requestOrgan();
+    this.geocodingService = new GeocodingService();
+    this.blockchainService = new BlockchainService();
+  }
+
+  async createDonation(data) {
+    const donor = await User.findById(data.donorId);
+    if (!donor) throw new Error("Donor not found");
+
+    data.address = donor.address;
+    data.location = donor.location;
+    data.phoneNumber = donor.phoneNumber;
+
+    return await this.DonorRepository.createDonation(data);
+  }
+
+  async confirmDonation(donatedOrganId, donorId, consentType) {
+    try {
+      return await this.DonorRepository.confirmDonation(
+        donatedOrganId,
+        donorId,
+        consentType
+      );
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
-    async createDonation(data) {
-      const donor = await User.findById(data.donorId);
-      if (!donor) throw new Error("Donor not found");
-
-      data.address = donor.address;
-      data.location = donor.location;
-      data.phoneNumber = donor.phoneNumber;
-
-      return await this.DonorRepository.createDonation(data);
+  async findAllRequests(data) {
+    try {
+      return await this.DonorRepository.findAllRequests(data);
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
-    async confirmDonation(donatedOrganId,donorId,consentType) {
-      try {
-        const confirmed = await this.DonorRepository.confirmDonation(donatedOrganId,donorId,consentType);
-        return confirmed;
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
-    }
+  async confirmAllocation(allocationId) {
 
-    async findAllRequests(data){
-      try {
-        const requests = await this.DonorRepository.findAllRequests(data);
-        return requests;
-      } catch (error) {
-        console.log(error);
-        console.log(error);
-      }
-    }
-
-    async confirmAllocation(allocationId) {
     const allocation = await Allocation.findById(allocationId);
+    if (!allocation) throw new Error("Allocation not found");
+
     const organ = await DonatedOrgan.findById(allocation.organId);
     const request = await RequestedOrgan.findById(allocation.requestId);
 
@@ -62,41 +68,43 @@ class DonorService {
     await organ.save();
     await request.save();
 
-    const newHash =
-      this.blockchainService.generateHash({
-        allocationId: allocation._id,
-        status: "MATCHED",
-        previousHash: allocation.lastBlockchainHash,
-        timestamp: Date.now()
-      });
+    const timestamp = new Date();
 
-    const txHash =
-      await this.blockchainService
-        .writeHashToBlockchain(newHash);
+    const hash = this.blockchainService.generateHash({
+      allocationId: allocation._id.toString(),
+      status: "MATCHED",
+      previousHash: allocation.lastBlockchainHash,
+      timestamp
+    });
 
-    allocation.lastBlockchainHash = newHash;
+    const txHash = await this.blockchainService.storeHash(hash);
+
+    allocation.lastBlockchainHash = hash;
 
     allocation.blockchainHistory.push({
       status: "MATCHED",
-      hash: newHash,
+      hash,
       txHash,
-      timestamp: new Date()
+      timestamp
     });
 
     await allocation.save();
 
-
     await Notification.create({
-    userId: request.createdByDoctorId,
-    message: "Donor has CONFIRMED the organ transplant request.",
-    allocationId: allocation._id
+      userId: request.createdByDoctorId,
+      message:
+        "Donor has CONFIRMED the organ transplant request.",
+      allocationId: allocation._id
     });
 
     return allocation;
   }
 
   async rejectAllocation(allocationId) {
+
     const allocation = await Allocation.findById(allocationId);
+    if (!allocation) throw new Error("Allocation not found");
+
     const organ = await DonatedOrgan.findById(allocation.organId);
     const request = await RequestedOrgan.findById(allocation.requestId);
 
@@ -110,24 +118,23 @@ class DonorService {
     await request.save();
 
     await Notification.create({
-    userId: request.createdByDoctorId,
-    message: "Donor has REJECTED the transplant request. Organ returned to pool.",
-    allocationId: allocation._id
+      userId: request.createdByDoctorId,
+      message:
+        "Donor has REJECTED the transplant request. Organ returned to pool.",
+      allocationId: allocation._id
     });
 
     return allocation;
   }
 
-  async findAll(donorId){
+  async findAll(donorId) {
     try {
-      const all = await this.DonorRepository.findAll(donorId);
-      return all;
+      return await this.DonorRepository.findAll(donorId);
     } catch (error) {
       console.log(error);
       throw error;
     }
   }
-
 }
 
 module.exports = DonorService;
