@@ -6,13 +6,17 @@ import Lottie from "lottie-react";
 import impact from "../assets/impact.json";
 import logo from "../assets/logo.png";
 
+
 const DonorDashboard = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [organName,setOrganName]=useState("");
+  const [bloodGroup,setBloodGroup]=useState("");
   const [organId,setOrganId]= useState(null);
   const [consent, setConsent] = useState(false);
   const [consentType, setConsentType] = useState("");
 
+  const [available, setAvailable] = useState([]);
   const [activeTab, setActiveTab] = useState("needs");
   const [showForm, setShowForm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -51,7 +55,8 @@ const DonorDashboard = () => {
         }
       );
   
-      setHospitalNeeds(res.data.data);
+      setAvailable(res.data.data);
+      console.log(hospitalNeeds);
     } catch (err) {
       console.log(err);
     }
@@ -100,7 +105,44 @@ const DonorDashboard = () => {
       console.log(err);
     }
   };
+const confirmAllocation = async (id) => {
+  try {
+    const res = await axios.post(
+      `http://localhost:5000/api/v1/donor/confirm-allocation/${id}`,
+      {},
+      {
+        headers: {
+          "x-access-token": localStorage.getItem("token"),
+        },
+      }
+    );
 
+    console.log("Allocation confirmed:", res.data);
+    fetchMyRequests(); 
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+const rejectAllocation = async (id) =>{
+try {
+    const res = await axios.post(
+      `http://localhost:5000/api/v1/donor/reject-allocation/${id}`,
+      {},
+      {
+        headers: {
+          "x-access-token": localStorage.getItem("token"),
+        },
+      }
+    );
+
+    console.log("Allocation confirmed:", res.data);
+    fetchMyRequests(); 
+
+  } catch (err) {
+    console.log(err);
+  }
+}
 const submitConsent = async (e) => {
     e.preventDefault();
 
@@ -158,6 +200,7 @@ const submitConsent = async (e) => {
           <button onClick={() => setActiveTab("needs")}>🏥 Hospital Needs</button>
           <button onClick={() => setActiveTab("voluntary")}>❤️ Willing Donation</button>
           <button onClick={() => setActiveTab("myRequests")}>📄 My Requests</button>
+          <button onClick={() => setActiveTab("available")}>🫀 Available Requests</button>
 
           <button
             className="mt-auto text-red-500"
@@ -175,7 +218,7 @@ const submitConsent = async (e) => {
 
         <h1 className="text-3xl font-bold mb-6">Welcome Donor ❤️</h1>
 
-       {showForm && (
+       {activeTab=="voluntary" && showForm&& (
   <div className="bg-white p-6 rounded-xl shadow mb-10 max-w-xl">
 
     {/* STEP 1 */}
@@ -254,9 +297,47 @@ const submitConsent = async (e) => {
 )}
 
 
+       {activeTab === "available" && (
+                <>
+                  <div className="flex gap-3 mb-5">
+                    <input
+                      placeholder="Organ"
+                      className="border p-2"
+                      value={organName}
+                      onChange={(e) => setOrganName(e.target.value)}
+                    />
+                    <input
+                      placeholder="Blood Group"
+                      className="border p-2"
+                      value={bloodGroup}
+                      onChange={(e) => setBloodGroup(e.target.value)}
+                    />
+                    <button onClick={fetchNeeds} className="bg-blue-600 text-white px-4">
+                      Search
+                    </button>
+                  </div>
+      
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {available.map((o) => (
+                      <motion.div key={o._id} className="border p-6 rounded-xl shadow">
+                        <h3 className="font-bold">{o.organName}</h3>
+                        <p>{o.bloodGroup}</p>
+      
+                        <button
+                          // onClick={() => acceptOrgan(o._id, o.requestId)}
+                          className="bg-green-600 text-white px-3 py-1 mt-3 rounded"
+                        >
+                          Accept
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
+
 
         {/* NEEDS */}
-        {activeTab === "needs" && !showForm && (
+        {activeTab === "needs"  && (
           <div className="grid md:grid-cols-2 gap-6">
             {hospitalNeeds.map((h) => (
               <motion.div key={h._id} className="border p-6 rounded-xl shadow">
@@ -275,7 +356,7 @@ const submitConsent = async (e) => {
         )}
 
         {/* VOLUNTARY */}
-        {activeTab === "voluntary" && !showForm && (
+        {activeTab === "voluntary"  && !showForm && (
           <div className="max-w-xl">
             <button
               onClick={() => openDonationForm({})}
@@ -298,6 +379,23 @@ const submitConsent = async (e) => {
                 <div key={r._id} className="border p-4 mb-3 rounded shadow">
                   <p>{r.organName}</p>
                   <span>{r.status}</span>
+                  {r.status === "RESERVED" && (
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={() => confirmAllocation(r._id)}
+                className="bg-green-600 text-white px-3 py-1 rounded"
+              >
+                Confirm
+              </button>
+
+              <button
+                onClick={() => rejectAllocation(r._id)}
+                className="bg-red-600 text-white px-3 py-1 rounded"
+              >
+                Reject
+              </button>
+            </div>
+          )}
                 </div>
               ))
             )}

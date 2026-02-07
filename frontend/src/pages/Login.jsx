@@ -9,7 +9,7 @@ const api = axios.create({
 const Login = () => {
   const navigate = useNavigate();
 
-  const [role, setRole] = useState("donor");
+  const [role, setRole] = useState("DONOR");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const Login = () => {
       console.log("TOKEN SAVED:", localStorage.getItem("token"));
 
       // Redirect
-      if (role === "donor") {
+      if (role === "DONOR") {
         navigate("/donor-dashboard");
       } else {
         navigate("/doctor-dashboard");
@@ -58,15 +58,15 @@ const Login = () => {
         {/* ROLE */}
         <div className="flex mb-6 rounded overflow-hidden">
           <button
-            onClick={() => setRole("donor")}
-            className={`w-1/2 py-2 ${role === "donor" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+            onClick={() => setRole("DONOR")}
+            className={`w-1/2 py-2 ${role === "DONOR" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
           >
             Donor
           </button>
 
           <button
-            onClick={() => setRole("doctor")}
-            className={`w-1/2 py-2 ${role === "doctor" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+            onClick={() => setRole("DOCTOR")}
+            className={`w-1/2 py-2 ${role === "DOCTOR" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
           >
             Doctor
           </button>

@@ -52,30 +52,28 @@ class DonorService {
     }
   }
 
-  async confirmAllocation(allocationId) {
-
-    const allocation = await Allocation.findById(allocationId);
-    if (!allocation) throw new Error("Allocation not found");
-
-    const organ = await DonatedOrgan.findById(allocation.organId);
-    const request = await RequestedOrgan.findById(allocation.requestId);
+    async confirmAllocation(organId) {
+      const organ = await DonatedOrgan.findById(organId);
+      console.log(organ,organId)
+      const allocation = await Allocation.findById(organ.allocationId);
+    console.log(allocation)
+    // const request = await RequestedOrgan.findById(allocation.requestId);
 
     allocation.status = "MATCHED";
     organ.status = "ALLOCATED";
-    request.status = "MATCHED";
+    // request.status = "MATCHED";
 
     await allocation.save();
     await organ.save();
-    await request.save();
+    // await request.save();
 
-    const timestamp = new Date();
-
-    const hash = this.blockchainService.generateHash({
-      allocationId: allocation._id.toString(),
-      status: "MATCHED",
-      previousHash: allocation.lastBlockchainHash,
-      timestamp
-    });
+    const newHash =
+      this.blockchainService.generateHash({
+        allocationId: allocation._id,
+        status: "MATCHED",
+        previousHash: allocation.lastBlockchainHash,
+        timestamp: Date.now()
+      });
 
     const txHash = await this.blockchainService.storeHash(hash);
 

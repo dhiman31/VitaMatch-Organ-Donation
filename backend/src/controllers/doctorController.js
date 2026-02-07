@@ -49,7 +49,7 @@ const findAllAvailable = async (req, res) => {
         {
           organName: req.query.organName,
           bloodGroup: req.query.bloodGroup,
-          urgencyScore: req.query.urgencyScore
+          urgencyScore: 10
         },
         doctorId
       );
@@ -76,11 +76,11 @@ const acceptOrgan = async (req, res) => {
   try {
 
     const { organId, requestId } = req.body;
-
     const allocation =
       await doctorServ.acceptOrgan({
         organId,
-        requestId
+        requestId,
+        user:req.user
       });
 
     return res.status(201).json({

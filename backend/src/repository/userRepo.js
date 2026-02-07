@@ -13,7 +13,7 @@ class userRepository {
     }
     async findUser(data){
         try {
-            const user = await User.findOne({email:data.email});
+            const user = await User.findOne({email:data.email,role:data.role});
             return user;
         } catch (error) {
             console.log(error);
